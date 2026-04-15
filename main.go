@@ -1,12 +1,19 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"net/url"
 )
+
+type Session struct {
+	AccessToken string `json:"access_token"`
+	IDToken     string `json:"id_token"`
+	UserID      string `json:"user_id"`
+}
 
 func main() {
 	mux := http.NewServeMux()
@@ -78,7 +85,13 @@ func main() {
 		payload.Set("code", code)
 		payload.Set("redirect_uri", redirectURI)
 
-		_, _ = http.PostForm("http://localhost:8080/oauth/token", payload)
+		resp, _ := http.PostForm("http://localhost:8080/oauth/token", payload)
+
+		var session Session
+
+		json.NewDecoder(resp.Body).Decode(&session)
+
+		fmt.Println(session)
 
 		t, _ := template.ParseFiles("templates/callback.html")
 		t.Execute(w, r.URL.Query().Get("code"))
