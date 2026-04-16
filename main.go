@@ -15,6 +15,8 @@ type Session struct {
 	UserID      string `json:"user_id"`
 }
 
+var sessions = make(map[string]Session)
+
 func main() {
 	mux := http.NewServeMux()
 
@@ -39,7 +41,7 @@ func main() {
 			return
 		}
 
-		state, err := generateState()
+		state, err := generateRandomString()
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
@@ -91,7 +93,13 @@ func main() {
 
 		json.NewDecoder(resp.Body).Decode(&session)
 
-		fmt.Println(session)
+		sessionID, err := generateRandomString()
+		if err != nil {
+			http.Error(w, "cant generate session id", http.StatusInternalServerError)
+			return
+		}
+
+		sessions[sessionID] = session
 
 		t, _ := template.ParseFiles("templates/callback.html")
 		t.Execute(w, r.URL.Query().Get("code"))
