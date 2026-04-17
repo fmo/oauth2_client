@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Session struct {
@@ -101,8 +103,23 @@ func main() {
 
 		sessions[sessionID] = session
 
+		idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
+			return []byte("my-secret"), nil
+		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "cant parse jwt", http.StatusInternalServerError)
+			return
+		}
+
+		claims := make(map[string]any)
+
+		if c, ok := idToken.Claims.(jwt.MapClaims); ok {
+			claims = c
+		}
+
 		t, _ := template.ParseFiles("templates/callback.html")
-		t.Execute(w, r.URL.Query().Get("code"))
+		t.Execute(w, claims["sub"])
 	})
 
 	fmt.Println("Server starting on port 8081")
