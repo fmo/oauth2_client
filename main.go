@@ -1,126 +1,19 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"html/template"
-	"log"
 	"net/http"
-	"net/url"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/fmo/oauth2-client/internal/handlers"
 )
-
-type Session struct {
-	AccessToken string `json:"access_token"`
-	IDToken     string `json:"id_token"`
-	UserID      string `json:"user_id"`
-}
-
-var sessions = make(map[string]Session)
 
 func main() {
 	mux := http.NewServeMux()
 
-	clientID := "web_client"
-	clientSecret := "demo-client-secret"
-	redirectURI := "http://localhost:8081/callback"
+	app := handlers.NewApp()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		t, err := template.ParseFiles("templates/home.html")
-		if err != nil {
-			http.Error(w, "cant render templates", http.StatusInternalServerError)
-			return
-		}
-
-		u, err := url.Parse("http://localhost:8080/oauth/authorize")
-		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		state, err := generateRandomString()
-		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
-
-		q := u.Query()
-		q.Add("response_type", "code")
-		q.Add("redirect_uri", redirectURI)
-		q.Add("client_id", clientID)
-		q.Add("scope", "openid profile email")
-		q.Add("state", state)
-
-		u.RawQuery = q.Encode()
-
-		http.SetCookie(w, &http.Cookie{
-			Name:  "oauth_state",
-			Value: state,
-			Path:  "/",
-		})
-		t.Execute(w, u.String())
-	})
-
-	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		state := r.URL.Query().Get("state")
-		code := r.URL.Query().Get("code")
-
-		c, err := r.Cookie("oauth_state")
-		if err != nil {
-			http.Error(w, "cant get cookie", http.StatusInternalServerError)
-			return
-		}
-
-		if c.Value != state {
-			log.Println("cookie val: ", c.Value, "state: ", state)
-			http.Error(w, "bad state", http.StatusBadRequest)
-			return
-		}
-
-		payload := url.Values{}
-		payload.Set("client_id", clientID)
-		payload.Set("client_secret", clientSecret)
-		payload.Set("grant_type", "authorization_code")
-		payload.Set("code", code)
-		payload.Set("redirect_uri", redirectURI)
-
-		resp, _ := http.PostForm("http://localhost:8080/oauth/token", payload)
-
-		var session Session
-
-		json.NewDecoder(resp.Body).Decode(&session)
-
-		sessionID, err := generateRandomString()
-		if err != nil {
-			http.Error(w, "cant generate session id", http.StatusInternalServerError)
-			return
-		}
-
-		sessions[sessionID] = session
-
-		idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
-			return []byte("my-secret"), nil
-		}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "cant parse jwt", http.StatusInternalServerError)
-			return
-		}
-
-		claims := make(map[string]any)
-
-		if c, ok := idToken.Claims.(jwt.MapClaims); ok {
-			claims = c
-		}
-
-		t, _ := template.ParseFiles("templates/callback.html")
-		t.Execute(w, claims["sub"])
-	})
+	mux.HandleFunc("/", app.HomeHandler)
+	mux.HandleFunc("/callback", app.CallbackHandler)
 
 	fmt.Println("Server starting on port 8081")
 	http.ListenAndServe(":8081", mux)
