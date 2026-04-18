@@ -39,7 +39,7 @@ func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(resp.Body).Decode(&session)
 
-	sessionID, err := generateRandomString()
+	sessionID, err := GenerateRandomString()
 	if err != nil {
 		http.Error(w, "cant generate session id", http.StatusInternalServerError)
 		return

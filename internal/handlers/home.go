@@ -1,9 +1,9 @@
+// Package handlers
 package handlers
 
 import (
 	"html/template"
 	"net/http"
-	"net/url"
 )
 
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,31 +17,24 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := url.Parse("http://localhost:8080/oauth/authorize")
+	state, err := GenerateRandomString()
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	state, err := generateRandomString()
+	authorizeURI, err := GenerateURI("http://localhost:8080/oauth/authorize", a.RedirectURI, a.ClientID, state)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	q := u.Query()
-	q.Add("response_type", "code")
-	q.Add("redirect_uri", a.RedirectURI)
-	q.Add("client_id", a.ClientID)
-	q.Add("scope", "openid profile email")
-	q.Add("state", state)
-
-	u.RawQuery = q.Encode()
-
+	// Set state cookie to check later in callback
 	http.SetCookie(w, &http.Cookie{
 		Name:  "oauth_state",
 		Value: state,
 		Path:  "/",
 	})
-	t.Execute(w, u.String())
+
+	t.Execute(w, authorizeURI)
 }
