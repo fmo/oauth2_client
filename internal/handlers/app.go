@@ -1,12 +1,17 @@
 package handlers
 
-import "fmt"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+)
 
 type App struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
-	Sessions     map[string]Session
+	Sessions     map[string]*Session
 	AuthServer   string
 }
 
@@ -21,7 +26,7 @@ func NewApp() *App {
 		ClientID:     "web_client",
 		ClientSecret: "demo-client-secret",
 		RedirectURI:  "http://localhost:8081/callback",
-		Sessions:     make(map[string]Session),
+		Sessions:     make(map[string]*Session),
 		AuthServer:   "http://localhost:8080",
 	}
 }
@@ -30,4 +35,18 @@ func (a *App) GetAuthorizeURI(state string) (string, error) {
 	base := fmt.Sprintf("%s/oauth/authorize", a.AuthServer)
 
 	return GenerateURI(base, a.RedirectURI, a.ClientID, state)
+}
+
+func (a *App) SaveSession(resp *http.Response) (*Session, error) {
+	var session *Session
+	json.NewDecoder(resp.Body).Decode(&session)
+
+	sessionID, err := GenerateRandomString()
+	if err != nil {
+		return nil, errors.New("cant generate session")
+	}
+
+	a.Sessions[sessionID] = session
+
+	return session, nil
 }

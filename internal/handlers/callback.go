@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
@@ -29,16 +28,12 @@ func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session Session
-	json.NewDecoder(resp.Body).Decode(&session)
-
-	sessionID, err := GenerateRandomString()
+	// Create session
+	session, err := a.SaveSession(resp)
 	if err != nil {
-		http.Error(w, "cant generate session id", http.StatusInternalServerError)
+		http.Error(w, "cant create session", http.StatusInternalServerError)
 		return
 	}
-
-	a.Sessions[sessionID] = session
 
 	idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
 		return []byte("my-secret"), nil
