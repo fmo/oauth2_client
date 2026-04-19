@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"net/url"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -14,29 +13,23 @@ func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	state := r.URL.Query().Get("state")
 	code := r.URL.Query().Get("code")
 
-	c, err := r.Cookie("oauth_state")
+	// Validate state
+	err := ValidateState(r, state)
 	if err != nil {
-		http.Error(w, "cant get cookie", http.StatusInternalServerError)
-		return
-	}
-
-	if c.Value != state {
-		log.Println("cookie val: ", c.Value, "state: ", state)
 		http.Error(w, "bad state", http.StatusBadRequest)
 		return
 	}
 
-	payload := url.Values{}
-	payload.Set("client_id", a.ClientID)
-	payload.Set("client_secret", a.ClientSecret)
-	payload.Set("grant_type", "authorization_code")
-	payload.Set("code", code)
-	payload.Set("redirect_uri", a.RedirectURI)
-
+	// Auth Token exchange payload
+	payload := GenerateTokenExchangePayload(a.ClientID, a.ClientSecret, code, a.RedirectURI)
 	resp, _ := http.PostForm("http://localhost:8080/oauth/token", payload)
 
-	var session Session
+	if resp.StatusCode == http.StatusUnauthorized {
+		http.Error(w, "wrong code has been sent", http.StatusUnauthorized)
+		return
+	}
 
+	var session Session
 	json.NewDecoder(resp.Body).Decode(&session)
 
 	sessionID, err := GenerateRandomString()

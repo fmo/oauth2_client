@@ -3,8 +3,25 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"net/http"
 	"net/url"
 )
+
+var ErrWrongState = errors.New("bad state")
+
+func ValidateState(r *http.Request, state string) error {
+	c, err := r.Cookie("oauth_state")
+	if err != nil {
+		return errors.New("cant get the cookie")
+	}
+
+	if c.Value != state {
+		return ErrWrongState
+	}
+
+	return nil
+}
 
 func GenerateRandomString() (string, error) {
 	b := make([]byte, 16)
@@ -13,6 +30,17 @@ func GenerateRandomString() (string, error) {
 	}
 
 	return hex.EncodeToString(b), nil
+}
+
+func GenerateTokenExchangePayload(clientID, clientSecret, code, redirectURI string) url.Values {
+	payload := url.Values{}
+	payload.Set("client_id", clientID)
+	payload.Set("client_secret", clientSecret)
+	payload.Set("grant_type", "authorization_code")
+	payload.Set("code", code)
+	payload.Set("rediret_uri", redirectURI)
+
+	return payload
 }
 
 func GenerateURI(base, redirectURI, clientID, state string) (string, error) {
