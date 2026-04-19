@@ -11,6 +11,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
@@ -23,7 +24,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	authorizeURI, err := GenerateURI("http://localhost:8080/oauth/authorize", a.RedirectURI, a.ClientID, state)
+	authorizeURI, err := a.GetAuthorizeURI(state)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
