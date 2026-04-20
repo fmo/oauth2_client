@@ -2,10 +2,7 @@ package handlers
 
 import (
 	"html/template"
-	"log"
 	"net/http"
-
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,19 +32,11 @@ func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
-		return []byte("my-secret"), nil
-	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	// Get claims
+	claims, err := GetClaims(session)
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "cant parse jwt", http.StatusInternalServerError)
+		http.Error(w, "cant get the claims", http.StatusInternalServerError)
 		return
-	}
-
-	claims := make(map[string]any)
-
-	if c, ok := idToken.Claims.(jwt.MapClaims); ok {
-		claims = c
 	}
 
 	t, _ := template.ParseFiles("templates/callback.html")

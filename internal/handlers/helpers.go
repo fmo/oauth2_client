@@ -6,6 +6,8 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var ErrWrongState = errors.New("bad state")
@@ -59,4 +61,21 @@ func GenerateURI(base, redirectURI, clientID, state string) (string, error) {
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil
+}
+
+func GetClaims(session *Session) (map[string]any, error) {
+	idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
+		return []byte("my-secret"), nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
+	if err != nil {
+		return nil, errors.New("cant parse jwt")
+	}
+
+	claims := make(map[string]any)
+
+	if c, ok := idToken.Claims.(jwt.MapClaims); ok {
+		claims = c
+	}
+
+	return claims, nil
 }
