@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 type App struct {
@@ -37,7 +38,7 @@ func (a *App) GetAuthorizeURI(state string) (string, error) {
 	return GenerateURI(base, a.RedirectURI, a.ClientID, state)
 }
 
-func (a *App) SaveSession(resp *http.Response) (*Session, error) {
+func (a *App) SaveSession(resp *http.Response, w http.ResponseWriter) (*Session, error) {
 	var session *Session
 	json.NewDecoder(resp.Body).Decode(&session)
 
@@ -47,6 +48,14 @@ func (a *App) SaveSession(resp *http.Response) (*Session, error) {
 	}
 
 	a.Sessions[sessionID] = session
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Path:     "/",
+		Value:    sessionID,
+		Expires:  time.Now().Add(60 * time.Minute),
+		HttpOnly: true,
+	})
 
 	return session, nil
 }

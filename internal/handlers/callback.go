@@ -26,7 +26,7 @@ func (a *App) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create session
-	session, err := a.SaveSession(resp)
+	session, err := a.SaveSession(resp, w)
 	if err != nil {
 		http.Error(w, "cant create session", http.StatusInternalServerError)
 		return

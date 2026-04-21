@@ -40,7 +40,7 @@ func GenerateTokenExchangePayload(clientID, clientSecret, code, redirectURI stri
 	payload.Set("client_secret", clientSecret)
 	payload.Set("grant_type", "authorization_code")
 	payload.Set("code", code)
-	payload.Set("rediret_uri", redirectURI)
+	payload.Set("redirect_uri", redirectURI)
 
 	return payload
 }
