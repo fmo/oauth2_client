@@ -18,6 +18,12 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionCookie, err := r.Cookie("session_id")
+	if err == nil {
+		t.Execute(w, sessionCookie)
+		return
+	}
+
 	state, err := GenerateRandomString()
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
