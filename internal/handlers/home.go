@@ -6,7 +6,14 @@ import (
 	"net/http"
 )
 
+type Response struct {
+	LoggedIn     bool
+	AuthorizeURI string
+}
+
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
+	resp := &Response{}
+
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
 		return
@@ -18,9 +25,9 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionCookie, err := r.Cookie("session_id")
+	_, err = r.Cookie("session_id")
 	if err == nil {
-		t.Execute(w, sessionCookie)
+		resp.LoggedIn = true
 		return
 	}
 
@@ -43,5 +50,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		Path:  "/",
 	})
 
-	t.Execute(w, authorizeURI)
+	resp.AuthorizeURI = authorizeURI
+
+	t.Execute(w, resp)
 }
