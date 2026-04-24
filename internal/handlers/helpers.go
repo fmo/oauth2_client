@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -64,6 +65,10 @@ func GenerateURI(base, redirectURI, clientID, state string) (string, error) {
 }
 
 func GetClaims(session *Session) (map[string]any, error) {
+	if session == nil {
+		log.Println("[ERROR] - Cant get claims for the session", session)
+		return nil, errors.New("session is not stored")
+	}
 	idToken, err := jwt.Parse(session.IDToken, func(token *jwt.Token) (any, error) {
 		return []byte("my-secret"), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))

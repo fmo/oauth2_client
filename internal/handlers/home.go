@@ -3,12 +3,14 @@ package handlers
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 )
 
 type Response struct {
 	LoggedIn     bool
 	AuthorizeURI string
+	Username     string
 }
 
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,9 +27,18 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = r.Cookie("session_id")
+	session, err := r.Cookie("session_id")
 	if err == nil {
 		resp.LoggedIn = true
+		log.Println("[DEBUG] session_id - ", session.Value)
+		claims, err := GetClaims(a.Sessions[session.Value])
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		resp.Username = claims["sub"].(string)
+
+		t.Execute(w, resp)
 		return
 	}
 
