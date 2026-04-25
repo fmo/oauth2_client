@@ -16,27 +16,36 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
 		return
 	}
 
-	session, err := r.Cookie("session_id")
+	sessionCookie, err := r.Cookie("session_id")
 	if err == nil {
-		resp.LoggedIn = true
-		log.Println("[DEBUG] session_id - ", session.Value)
-		claims, err := GetClaims(a.Sessions[session.Value])
+		log.Println("[DEBUG] session_id - ", sessionCookie.Value)
+
+		session, ok := a.Sessions[sessionCookie.Value]
+		if !ok {
+			http.SetCookie(w, &http.Cookie{
+				Name:     "session_id",
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+			})
+		}
+
+		claims, err := GetClaims(session)
 		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			http.Error(w, "cant get claims", http.StatusInternalServerError)
 			return
 		}
+
 		resp.Username = claims["sub"].(string)
+
+		resp.LoggedIn = true
 
 		t.Execute(w, resp)
 		return
