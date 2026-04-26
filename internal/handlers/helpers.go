@@ -64,6 +64,16 @@ func GenerateURI(base, redirectURI, clientID, state string) (string, error) {
 	return u.String(), nil
 }
 
+func UnsetCookie(w http.ResponseWriter, name string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+	})
+}
+
 func GetClaims(session *Session) (map[string]any, error) {
 	if session == nil {
 		log.Println("[ERROR] - Cant get claims for the session", session)
