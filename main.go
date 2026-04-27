@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/fmo/oauth2-client/internal/handlers"
 )
 
 func main() {
 	mux := http.NewServeMux()
+
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
 	app := handlers.NewApp()
 

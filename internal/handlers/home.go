@@ -4,6 +4,7 @@ package handlers
 import (
 	"html/template"
 	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -16,8 +17,8 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	log.Println("")
-	log.Println("[DEBUG] HomeHandler")
+	slog.Info("")
+	slog.Info("HomeHandler")
 
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
@@ -29,7 +30,6 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err == nil {
 		log.Println("[DEBUG] cookie exists and the session id in there is")
-
 		session, ok := a.Sessions[sessionCookie.Value]
 		if !ok {
 			log.Println("[DEBUG] session id is not recorded so i'm doing to delete session cookie")
@@ -60,13 +60,6 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("[DEBUG] generating authorize uri")
-	authorizeURI, err := a.GetAuthorizeURI(state)
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
 	log.Println("[DEBUG] setting state cookie to check later when the response comes from oauth2/authorize")
 	// Set state cookie to check later in callback
 	http.SetCookie(w, &http.Cookie{
@@ -76,6 +69,12 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
+	log.Println("[DEBUG] generating authorize uri")
+	authorizeURI, err := a.GetAuthorizeURI(state)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 	resp.AuthorizeURI = authorizeURI
 
 	t.Execute(w, resp)
