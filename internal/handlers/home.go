@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"html/template"
-	"log"
 	"log/slog"
 	"net/http"
 )
@@ -17,8 +16,13 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	slog.Info("")
-	slog.Info("HomeHandler")
+	logger := slog.With(
+		"handler", "HomeHandler",
+	)
+
+	slog.SetDefault(logger)
+
+	slog.Info("Started")
 
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
@@ -26,16 +30,16 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("[DEBUG] checking session cookie to see if the user already logged in")
+	slog.Info("checking session cookie to see if the user already logged in")
 	sessionCookie, err := r.Cookie("session_id")
 	if err == nil {
-		log.Println("[DEBUG] cookie exists and the session id in there is")
+		slog.Info("cookie exists and the session id in there is")
 		session, ok := a.Sessions[sessionCookie.Value]
 		if !ok {
-			log.Println("[DEBUG] session id is not recorded so i'm doing to delete session cookie")
+			slog.Info("session id is not recorded so i'm doing to delete session cookie")
 			UnsetCookie(w, "session_id")
 		} else {
-			log.Println("[DEBUG] session id in the cookie also in the system so i will get the claims")
+			slog.Info("session id in the cookie also in the system so i will get the claims")
 			claims, err := GetClaims(session)
 			if err != nil {
 				http.Error(w, "cant get claims", http.StatusInternalServerError)
@@ -50,18 +54,17 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		log.Println("[DEBUG] session cookie does not exist, so user is not logged in")
+		slog.Info("session cookie does not exist, so user is not logged in")
 	}
 
-	log.Println("[DEBUG] generating random string will be used for state to validate response is really coming from oauth provider")
+	slog.Info("generating random string will be used for state to validate response is really coming from oauth provider")
 	state, err := GenerateRandomString()
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	log.Println("[DEBUG] setting state cookie to check later when the response comes from oauth2/authorize")
-	// Set state cookie to check later in callback
+	slog.Info("setting state cookie to check later when the response comes from oauth2/authorize")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_state",
 		Value:    state,
@@ -69,7 +72,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 	})
 
-	log.Println("[DEBUG] generating authorize uri")
+	slog.Info("generating authorize uri")
 	authorizeURI, err := a.GetAuthorizeURI(state)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
