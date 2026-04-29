@@ -16,11 +16,9 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	logger := slog.With(
+	slog := slog.With(
 		"handler", "HomeHandler",
 	)
-
-	slog.SetDefault(logger)
 
 	slog.Info("Started")
 
@@ -30,31 +28,11 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("checking session cookie to see if the user already logged in")
-	sessionCookie, err := r.Cookie("session_id")
+	username, err := a.IsUserSigned(w, r)
 	if err == nil {
-		slog.Info("cookie exists and the session id in there is")
-		session, ok := a.Sessions[sessionCookie.Value]
-		if !ok {
-			slog.Info("session id is not recorded so i'm doing to delete session cookie")
-			UnsetCookie(w, "session_id")
-		} else {
-			slog.Info("session id in the cookie also in the system so i will get the claims")
-			claims, err := GetClaims(session)
-			if err != nil {
-				http.Error(w, "cant get claims", http.StatusInternalServerError)
-				return
-			}
-
-			resp.Username = claims["sub"].(string)
-
-			resp.LoggedIn = true
-
-			t.Execute(w, resp)
-			return
-		}
-	} else {
-		slog.Info("session cookie does not exist, so user is not logged in")
+		resp.Username = username
+		resp.LoggedIn = true
+		t.Execute(w, resp)
 	}
 
 	slog.Info("generating random string will be used for state to validate response is really coming from oauth provider")
