@@ -61,26 +61,28 @@ func (a *App) SaveSession(resp *http.Response, w http.ResponseWriter) (*Session,
 	return session, nil
 }
 
-func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) (string, error) {
-	slog.Info("checking session cookie to see if the user already logged in")
-	sessionCookie, err := r.Cookie("session_id")
-	if err == nil {
-		slog.Info("cookie exists and session id in there is")
-		session, ok := a.Sessions[sessionCookie.Value]
-		if !ok {
-			slog.Info("session id is not recored so i'm going to delete session cookie")
-			UnsetCookie(w, "session_id")
-		} else {
-			slog.Info("session id in the cookie also in the system so i will get the claims")
-			claims, err := GetClaims(session)
-			if err != nil {
-				return "", fmt.Errorf("cant get the claims, %w", err)
-			}
+func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) string {
+	slog.Info("Checking session cookie if it exists")
 
-			return claims["sub"].(string), nil
-		}
+	sessionCookie, err := r.Cookie("session_id")
+	if err != nil {
+		slog.Info("Session cookie does not exist, so user is not logged in")
+		return ""
 	}
 
-	slog.Info("session cookie does not exist, so user is not logged in")
-	return "", err
+	slog.Info("Session cookie exists")
+	session, ok := a.Sessions[sessionCookie.Value]
+	if !ok {
+		slog.Info("Session id is not recored so deleting session cookie")
+		UnsetCookie(w, "session_id")
+		return ""
+	}
+
+	slog.Info("Session id in the cookie also in the system so getting the claims")
+	claims, err := GetClaims(session)
+	if err != nil {
+		return ""
+	}
+
+	return claims["sub"].(string)
 }

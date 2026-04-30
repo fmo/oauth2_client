@@ -8,9 +8,9 @@ import (
 )
 
 type Response struct {
-	LoggedIn     bool
-	AuthorizeURI string
-	Username     string
+	SignedIn  bool
+	SigninURI string
+	Username  string
 }
 
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,41 +22,41 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	slog.Info("Started")
 
+	username := a.IsUserSigned(w, r)
+	if username != "" {
+		slog.Info("User is alredy signed in")
+		resp.Username = username
+		resp.SignedIn = true
+	} else {
+		slog.Info("Generating random string for state")
+		state, err := GenerateRandomString()
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+
+		slog.Info("Setting state cookie with the random string")
+		http.SetCookie(w, &http.Cookie{
+			Name:     "oauth_state",
+			Value:    state,
+			Path:     "/",
+			HttpOnly: true,
+		})
+
+		slog.Info("Generating signin uri")
+		signinURI, err := a.GetAuthorizeURI(state)
+		if err != nil {
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		resp.SigninURI = signinURI
+	}
+
+	slog.Info("Parsing and execute templates")
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
 		return
 	}
-
-	username, err := a.IsUserSigned(w, r)
-	if err == nil {
-		resp.Username = username
-		resp.LoggedIn = true
-		t.Execute(w, resp)
-	}
-
-	slog.Info("generating random string will be used for state to validate response is really coming from oauth provider")
-	state, err := GenerateRandomString()
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	slog.Info("setting state cookie to check later when the response comes from oauth2/authorize")
-	http.SetCookie(w, &http.Cookie{
-		Name:     "oauth_state",
-		Value:    state,
-		Path:     "/",
-		HttpOnly: true,
-	})
-
-	slog.Info("generating authorize uri")
-	authorizeURI, err := a.GetAuthorizeURI(state)
-	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	resp.AuthorizeURI = authorizeURI
-
 	t.Execute(w, resp)
 }

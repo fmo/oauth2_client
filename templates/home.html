@@ -2,10 +2,10 @@
     <head></head>
     <body>
     <h1>Client Application</h1>
-    {{if .LoggedIn}}
+    {{if .SignedIn}}
     <p>Hi {{ .Name }}/p>
     {{else}}
-        <a href="{{.AuthorizeURI}}">Login</a>
+        <a href="{{.signinURI}}">Signin</a>
     {{end}}
     </body>
 </html>
