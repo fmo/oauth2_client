@@ -12,7 +12,9 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
 	slog.SetDefault(logger)
 
 	app := handlers.NewApp()

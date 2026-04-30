@@ -58,5 +58,6 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
 		return
 	}
+
 	t.Execute(w, resp)
 }
