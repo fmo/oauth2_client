@@ -16,11 +16,7 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	slog := slog.With(
-		"handler", "HomeHandler",
-	)
-
-	slog.Info("Started")
+	slog.Info("===== HomeHandler =====")
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
@@ -52,7 +48,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		resp.SigninURI = signinURI
 	}
 
-	slog.Info("Parsing and execute templates")
+	slog.Info("Parsing and executing template")
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
