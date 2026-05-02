@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/fmo/oauth2-client/internal"
 )
 
 type App struct {
@@ -15,6 +16,7 @@ type App struct {
 	RedirectURI  string
 	Sessions     map[string]*Session
 	AuthServer   string
+	Logger       *internal.Logger
 }
 
 type Session struct {
@@ -23,13 +25,14 @@ type Session struct {
 	UserID      string `json:"user_id"`
 }
 
-func NewApp() *App {
+func NewApp(l *internal.Logger) *App {
 	return &App{
 		ClientID:     "web_client",
 		ClientSecret: "demo-client-secret",
 		RedirectURI:  "http://localhost:8081/callback",
 		Sessions:     make(map[string]*Session),
 		AuthServer:   "http://localhost:8080",
+		Logger:       l,
 	}
 }
 
@@ -62,23 +65,23 @@ func (a *App) SaveSession(resp *http.Response, w http.ResponseWriter) (*Session,
 }
 
 func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) string {
-	slog.Info("Checking session cookie if it exists")
+	a.Logger.Info("Checking session cookie if it exists")
 
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
-		slog.Info("Session cookie does not exist, so user is not logged in")
+		a.Logger.Info("Session cookie does not exist, so user is not logged in")
 		return ""
 	}
 
-	slog.Info("Session cookie exists")
+	a.Logger.Info("Session cookie exists")
 	session, ok := a.Sessions[sessionCookie.Value]
 	if !ok {
-		slog.Info("Session id is not recored so deleting session cookie")
+		a.Logger.Info("Session id is not recored so deleting session cookie")
 		UnsetCookie(w, "session_id")
 		return ""
 	}
 
-	slog.Info("Session id in the cookie also in the system so getting the claims")
+	a.Logger.Info("Session id in the cookie also in the system so getting the claims")
 	claims, err := GetClaims(session)
 	if err != nil {
 		return ""

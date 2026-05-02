@@ -3,7 +3,6 @@ package handlers
 
 import (
 	"html/template"
-	"log/slog"
 	"net/http"
 )
 
@@ -16,22 +15,22 @@ type Response struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	resp := &Response{}
 
-	slog.Info("===== HomeHandler =====")
+	a.Logger.Info("===== HomeHandler =====")
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
-		slog.Info("User is alredy signed in")
+		a.Logger.Info("User is alredy signed in")
 		resp.Username = username
 		resp.SignedIn = true
 	} else {
-		slog.Info("Generating random string for state")
+		a.Logger.Info("Generating random string for state")
 		state, err := GenerateRandomString()
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 
-		slog.Info("Setting state cookie with the random string")
+		a.Logger.Info("Setting state cookie with the random string")
 		http.SetCookie(w, &http.Cookie{
 			Name:     "oauth_state",
 			Value:    state,
@@ -39,7 +38,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 		})
 
-		slog.Info("Generating signin uri")
+		a.Logger.Info("Generating signin uri")
 		signinURI, err := a.GetAuthorizeURI(state)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -48,7 +47,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		resp.SigninURI = signinURI
 	}
 
-	slog.Info("Parsing and executing template")
+	a.Logger.Info("Parsing and executing template")
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
