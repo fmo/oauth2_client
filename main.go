@@ -11,7 +11,7 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	logger := internal.NewLogger(internal.Info)
+	logger := internal.NewLogger(internal.Debug)
 
 	app := handlers.NewApp(logger)
 
