@@ -38,7 +38,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			HttpOnly: true,
 		})
 
-		a.Logger.Info("Generating signin uri")
+		a.Logger.Info("Generating authorize uri")
 		signinURI, err := a.GetAuthorizeURI(state)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
