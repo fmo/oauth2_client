@@ -37,6 +37,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 		})
+		a.Logger.Debug("Cookie name: %s, cookie value: %s", "auth_state", state)
 
 		a.Logger.Info("Generating authorize uri")
 		signinURI, err := a.GetAuthorizeURI(state)
@@ -45,10 +46,10 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		homeViewData.SigninURI = signinURI
+		a.Logger.Debug("Authorize URI: %s", homeViewData.SigninURI)
 	}
 
 	a.Logger.Info("Parsing and executing template")
-	a.Logger.Debug("Authorize URI: %s", homeViewData.SigninURI)
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)
