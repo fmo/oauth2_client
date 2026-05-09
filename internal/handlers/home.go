@@ -15,7 +15,7 @@ type HomeViewData struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
-	a.Logger.Info("===== HomeHandler =====")
+	a.Logger.Info("===== HomeHandler =====\n")
 
 	a.Logger.Info("Client Id: %s", a.ClientID)
 
@@ -58,5 +58,6 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	a.Logger.Info("\n")
 	t.Execute(w, homeViewData)
 }

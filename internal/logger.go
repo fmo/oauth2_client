@@ -27,10 +27,10 @@ type Logger struct {
 func NewLogger(level Level) *Logger {
 	logFlags := log.Lshortfile | log.Ltime | log.Lmsgprefix
 
-	debug := log.New(os.Stdout, "DEBUG ", logFlags)
-	info := log.New(os.Stdout, "INFO ", logFlags)
-	warning := log.New(os.Stdout, "WARNING ", logFlags)
-	err := log.New(os.Stderr, "ERROR ", logFlags)
+	debug := log.New(os.Stdout, "[DEBUG] ", logFlags)
+	info := log.New(os.Stdout, "[INFO] ", logFlags)
+	warning := log.New(os.Stdout, "[WARNING] ", logFlags)
+	err := log.New(os.Stderr, "[ERROR] ", logFlags)
 
 	return &Logger{
 		level:         level,
