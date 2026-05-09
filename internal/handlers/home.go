@@ -17,6 +17,8 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	a.Logger.Info("===== HomeHandler =====")
 
+	a.Logger.Info("Client Id: %s", a.ClientID)
+
 	username := a.IsUserSigned(w, r)
 	if username != "" {
 		a.Logger.Info("User is alredy signed in")
