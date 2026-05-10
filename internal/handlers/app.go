@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fmo/oauth2-client/internal"
+	"github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -16,7 +16,7 @@ type App struct {
 	RedirectURI  string
 	Sessions     map[string]*Session
 	AuthServer   string
-	Logger       *internal.Logger
+	Logger       *logrus.Logger
 }
 
 type Session struct {
@@ -25,7 +25,7 @@ type Session struct {
 	UserID      string `json:"user_id"`
 }
 
-func NewApp(l *internal.Logger) *App {
+func NewApp(l *logrus.Logger) *App {
 	return &App{
 		ClientID:     "web_client",
 		ClientSecret: "demo-client-secret",

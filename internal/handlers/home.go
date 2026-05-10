@@ -17,7 +17,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	a.Logger.Info("===== HomeHandler =====\n")
 
-	a.Logger.Info("Client Id: %s", a.ClientID)
+	a.Logger.Infof("Client Id: %s", a.ClientID)
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
@@ -39,7 +39,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 		})
-		a.Logger.Debug("Cookie name: %s, cookie value: %s", "auth_state", state)
+		a.Logger.Debugf("Cookie name: %s, cookie value: %s", "auth_state", state)
 
 		a.Logger.Info("Generating authorize uri")
 		signinURI, err := a.GetAuthorizeURI(state)
@@ -48,10 +48,10 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		homeViewData.SigninURI = signinURI
-		a.Logger.Debug("Authorize URI: %s", homeViewData.SigninURI)
+		a.Logger.Debugf("Authorize URI: %s", homeViewData.SigninURI)
 	}
 
-	a.Logger.Info("Parsing and executing template")
+	a.Logger.Info("Parsing and executing template, ready to go to oauth provider")
 	t, err := template.ParseFiles("templates/home.html")
 	if err != nil {
 		http.Error(w, "cant render templates", http.StatusInternalServerError)

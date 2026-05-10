@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/fmo/oauth2-client/internal"
 	"github.com/fmo/oauth2-client/internal/handlers"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	mux := http.NewServeMux()
 
-	logger := internal.NewLogger(internal.Debug)
+	logger := logrus.New()
+
+	logger.SetLevel(logrus.DebugLevel)
 
 	app := handlers.NewApp(logger)
 
