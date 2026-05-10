@@ -4,6 +4,8 @@ package handlers
 import (
 	"html/template"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type HomeViewData struct {
@@ -16,8 +18,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
 	a.Logger.Info("===== HomeHandler =====\n")
-
-	a.Logger.Infof("Client Id: %s", a.ClientID)
+	a.Logger.WithField("client_id", a.ClientID).Debug("Client Id")
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
@@ -28,6 +29,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		a.Logger.Info("Generating random string for state")
 		state, err := GenerateRandomString()
 		if err != nil {
+			a.Logger.Error("Cant generate random string for state")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
@@ -39,7 +41,10 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 		})
-		a.Logger.Debugf("Cookie name: %s, cookie value: %s", "auth_state", state)
+		a.Logger.WithFields(logrus.Fields{
+			"cookie_name":  "auth_state",
+			"cookie_value": state,
+		}).Debug("Cookie Values")
 
 		a.Logger.Info("Generating authorize uri")
 		signinURI, err := a.GetAuthorizeURI(state)
@@ -48,7 +53,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		homeViewData.SigninURI = signinURI
-		a.Logger.Debugf("Authorize URI: %s", homeViewData.SigninURI)
+		a.Logger.WithField("authorize_uri", homeViewData.SigninURI).Debug("Authorize URI")
 	}
 
 	a.Logger.Info("Parsing and executing template, ready to go to oauth provider")
