@@ -18,7 +18,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
 	a.Logger.Info("===== HomeHandler =====\n")
-	a.Logger.WithField("client_id", a.ClientID).Debug("Client Id")
+	a.Logger.WithField("client_id", a.ClientID).Debug("Home handler for oauth sign-in flow")
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {

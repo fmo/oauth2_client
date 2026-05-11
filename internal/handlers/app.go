@@ -65,7 +65,7 @@ func (a *App) SaveSession(resp *http.Response, w http.ResponseWriter) (*Session,
 }
 
 func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) string {
-	a.Logger.Info("Checking session cookie if it exists")
+	a.Logger.WithField("session name", "session_id").Info("Checking session cookie if it exists")
 
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
