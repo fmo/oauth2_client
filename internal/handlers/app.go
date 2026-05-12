@@ -69,19 +69,19 @@ func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) string {
 
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
-		a.Logger.Info("Session cookie does not exist, so user is not logged in")
+		a.Logger.WithField("session name", "session_id").Info("Session cookie does not exist, so user is not logged in")
 		return ""
 	}
 
-	a.Logger.Info("Session cookie exists")
+	a.Logger.WithField("session name", "session_id").Info("Session cookie exists")
 	session, ok := a.Sessions[sessionCookie.Value]
 	if !ok {
-		a.Logger.Info("Session id is not recored so deleting session cookie")
+		a.Logger.WithField("session name", "session_id").Info("Session id is not recored so deleting session cookie")
 		UnsetCookie(w, "session_id")
 		return ""
 	}
 
-	a.Logger.Info("Session id in the cookie also in the system so getting the claims")
+	a.Logger.WithField("session name", "session_id").Info("Session id in the cookie also in the system so getting the claims")
 	claims, err := GetClaims(session)
 	if err != nil {
 		return ""

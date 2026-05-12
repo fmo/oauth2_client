@@ -17,8 +17,8 @@ type HomeViewData struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
-	a.Logger.Info("===== HomeHandler =====\n")
-	a.Logger.WithField("client_id", a.ClientID).Debug("Home handler for oauth sign-in flow")
+	a.Logger.Info("===== HomeHandler Start =====\n")
+	a.Logger.WithField("client_id", a.ClientID).Info("Client for oauth sign-in flow")
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
@@ -26,13 +26,14 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		homeViewData.Username = username
 		homeViewData.SignedIn = true
 	} else {
-		a.Logger.Info("Generating random string for state")
+		a.Logger.WithField("state", "").Info("Generating random string for state")
 		state, err := GenerateRandomString()
 		if err != nil {
-			a.Logger.Error("Cant generate random string for state")
+			a.Logger.WithError(err).Error("Cant generate random string for state")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
+		a.Logger.WithField("state", state).Debug("State is created")
 
 		a.Logger.Info("Setting state cookie with the random string")
 		http.SetCookie(w, &http.Cookie{
@@ -63,6 +64,6 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.Logger.Info("\n")
+	a.Logger.Info("===== HomeHandler End =====")
 	t.Execute(w, homeViewData)
 }
