@@ -26,7 +26,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		homeViewData.Username = username
 		homeViewData.SignedIn = true
 	} else {
-		a.Logger.WithField("state", "").Info("Generating random string for state")
+		a.Logger.Info("Generating random string for state")
 		state, err := GenerateRandomString()
 		if err != nil {
 			a.Logger.WithError(err).Error("Cant generate random string for state")
