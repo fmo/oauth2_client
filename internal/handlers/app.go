@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 type App struct {
@@ -16,7 +15,7 @@ type App struct {
 	RedirectURI  string
 	Sessions     map[string]*Session
 	AuthServer   string
-	Logger       *logrus.Logger
+	Logger       *slog.Logger
 }
 
 type Session struct {
@@ -25,14 +24,14 @@ type Session struct {
 	UserID      string `json:"user_id"`
 }
 
-func NewApp(l *logrus.Logger) *App {
+func NewApp(logger *slog.Logger) *App {
 	return &App{
 		ClientID:     "web_client",
 		ClientSecret: "demo-client-secret",
 		RedirectURI:  "http://localhost:8081/callback",
 		Sessions:     make(map[string]*Session),
 		AuthServer:   "http://localhost:8080",
-		Logger:       l,
+		Logger:       logger,
 	}
 }
 
@@ -65,23 +64,23 @@ func (a *App) SaveSession(resp *http.Response, w http.ResponseWriter) (*Session,
 }
 
 func (a *App) IsUserSigned(w http.ResponseWriter, r *http.Request) string {
-	a.Logger.WithField("session name", "session_id").Info("Checking session cookie if it exists")
+	a.Logger.Info("Checking session cookie if it exists", "session name", "session_id")
 
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
-		a.Logger.WithField("session name", "session_id").Info("Session cookie does not exist, so user is not logged in")
+		a.Logger.Info("Session cookie does not exist, so user is not logged in", "sesion name", "session_id")
 		return ""
 	}
 
-	a.Logger.WithField("session name", "session_id").Info("Session cookie exists")
+	a.Logger.Info("Session cookie exists", "session name", "session_id")
 	session, ok := a.Sessions[sessionCookie.Value]
 	if !ok {
-		a.Logger.WithField("session name", "session_id").Info("Session id is not recored so deleting session cookie")
+		a.Logger.Info("Session id is not recored so deleting session cookie", "session name", "session_id")
 		UnsetCookie(w, "session_id")
 		return ""
 	}
 
-	a.Logger.WithField("session name", "session_id").Info("Session id in the cookie also in the system so getting the claims")
+	a.Logger.Info("Session id in the cookie also in the system so getting the claims", "session name", "session_id")
 	claims, err := GetClaims(session)
 	if err != nil {
 		return ""

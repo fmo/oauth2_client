@@ -4,8 +4,6 @@ package handlers
 import (
 	"html/template"
 	"net/http"
-
-	"github.com/sirupsen/logrus"
 )
 
 type HomeViewData struct {
@@ -17,8 +15,10 @@ type HomeViewData struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
-	a.Logger.Info("===== HomeHandler Start =====\n")
-	a.Logger.WithField("client_id", a.ClientID).Info("Client for oauth sign-in flow")
+	a.Logger.Info("===== HomeHandler Start =====")
+	defer a.Logger.Info("===== HomeHandler End =====")
+
+	a.Logger.Info("Client for oauth sign-in flow", "client_id", a.ClientID)
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
@@ -29,11 +29,11 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		a.Logger.Info("Generating random string for state")
 		state, err := GenerateRandomString()
 		if err != nil {
-			a.Logger.WithError(err).Error("Cant generate random string for state")
+			a.Logger.Error("Cant generate random string for state", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		a.Logger.WithField("state", state).Debug("State is created")
+		a.Logger.Debug("State is created", "state", state)
 
 		a.Logger.Info("Setting state cookie with the random string")
 		http.SetCookie(w, &http.Cookie{
@@ -42,10 +42,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			Path:     "/",
 			HttpOnly: true,
 		})
-		a.Logger.WithFields(logrus.Fields{
-			"cookie_name":  "auth_state",
-			"cookie_value": state,
-		}).Debug("Cookie Values")
+		a.Logger.Debug("Cookie Values", "cookie_name", "auth_state", "cookie_value", state)
 
 		a.Logger.Info("Generating authorize uri")
 		signinURI, err := a.GetAuthorizeURI(state)
@@ -54,7 +51,7 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		homeViewData.SigninURI = signinURI
-		a.Logger.WithField("authorize_uri", homeViewData.SigninURI).Debug("Authorize URI")
+		a.Logger.Debug("Authorize URI", "authorize_uri", homeViewData.SigninURI)
 	}
 
 	a.Logger.Info("Parsing and executing template, ready to go to oauth provider")
@@ -64,6 +61,5 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.Logger.Info("===== HomeHandler End =====")
 	t.Execute(w, homeViewData)
 }

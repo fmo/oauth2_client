@@ -1,26 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/fmo/oauth2-client/internal/handlers"
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	logger := logrus.New()
+	// Set logger
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	logger.SetLevel(logrus.DebugLevel)
-
+	// Initiate app
 	app := handlers.NewApp(logger)
 
+	// Router setup
 	r := chi.NewRouter()
 
 	r.Get("/", app.HomeHandler)
 	r.Get("/callback", app.CallbackHandler)
 
-	fmt.Println("Server starting on port 8081")
+	// Start server
+	logger.Info("Server starting", "port", "8081")
 	http.ListenAndServe(":8081", r)
 }
