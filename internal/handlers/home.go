@@ -15,9 +15,6 @@ type HomeViewData struct {
 func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 	homeViewData := &HomeViewData{}
 
-	a.Logger.Info("===== HomeHandler Start =====")
-	defer a.Logger.Info("===== HomeHandler End =====")
-
 	a.Logger.Info("Client for oauth sign-in flow", "client_id", a.ClientID)
 
 	username := a.IsUserSigned(w, r)

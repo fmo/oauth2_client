@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/fmo/oauth2-client/internal/handlers"
 	"github.com/go-chi/chi/v5"
@@ -11,7 +12,25 @@ import (
 
 func main() {
 	// Set logger
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	logger := slog.New(
+		slog.NewTextHandler(
+			os.Stdout, 
+			&slog.HandlerOptions{
+				Level: slog.LevelDebug,
+				AddSource: true,
+				ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+					if a.Key == slog.SourceKey {
+						source := a.Value.Any().(*slog.Source)
+
+						wd, _ := os.Getwd()
+
+						source.File = strings.TrimPrefix(source.File, wd+"/")
+					}
+
+					return a
+				},
+			},
+		))
 
 	// Initiate app
 	app := handlers.NewApp(logger)
