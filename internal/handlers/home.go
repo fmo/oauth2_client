@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"html/template"
+	"log/slog"
 	"net/http"
 )
 
@@ -19,7 +20,8 @@ func (a *App) HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 	username := a.IsUserSigned(w, r)
 	if username != "" {
-		a.Logger.Info("User is alredy signed in")
+		userGroup := slog.Group("user", "username", username)
+		a.Logger.Info("User is alredy signed in", userGroup)
 		homeViewData.Username = username
 		homeViewData.SignedIn = true
 	} else {
